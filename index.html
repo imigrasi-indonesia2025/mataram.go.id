@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KANTOR IMIGRASI KELAS 1 TPI MATARAM - Sistem Layanan Pembayaran Online</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles untuk modal dan animasi */
+        .modal-backdrop {
+            backdrop-filter: blur(4px);
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-content {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .timer-warning {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        .copy-feedback {
+            animation: fadeInOut 2s ease-in-out;
+        }
+        
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: scale(0.8); }
+            20% { opacity: 1; transform: scale(1); }
+            80% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(0.8); }
+        }
+        
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <!-- Halaman Utama -->
+    <div id="mainPage" class="flex flex-col items-center justify-center min-h-screen gap-8 p-4">
+        <div class="flex flex-col items-center gap-4">
+            <div class="relative w-32 h-32 md:w-40 md:h-40">
+                <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcShdzgLTxIXGsA1xIfu7DXeEM_7EbPUjOrlvQ&s"
+                    alt="Kantor Imigrasi Logo"
+                    class="w-full h-full object-contain"
+                />
+            </div>
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900 text-center">
+                KANTOR IMIGRASI<br/>KELAS 1 TPI MATARAM
+            </h1>
+        </div>
+        
+        <div class="text-center max-w-2xl">
+            <p class="text-lg text-gray-600 mb-8">
+                Sistem Layanan Pembayaran Online
+            </p>
+            
+            <button 
+                onclick="openPaymentModal()"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-medium rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl"
+            >
+                Lihat Detail Pembayaran
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Pembayaran -->
+    <div id="paymentModal" class="fixed inset-0 z-50 hidden">
+        <div class="modal-backdrop fixed inset-0" onclick="closePaymentModal()"></div>
+        <div class="fixed inset-0 flex items-center justify-center p-4">
+            <div class="modal-content bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between p-6 border-b">
+                    <h2 class="text-xl font-bold text-gray-900">Detail Pembayaran</h2>
+                    <div class="flex items-center gap-2">
+                        <img 
+                            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSUJSAOQz4oOxXz4C1YvfBb6ugF9xr2AXr3eA&s" 
+                            alt="Logo" 
+                            class="w-12 h-12 object-contain"
+                        />
+                    </div>
+                </div>
+
+                <!-- Modal Content -->
+                <div class="p-6 space-y-6 overflow-y-auto custom-scrollbar max-h-[calc(90vh-120px)]">
+                    <!-- Payment Timer -->
+                    <div id="timerCard" class="border-2 border-red-200 bg-red-50 rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-red-800">Batas Waktu Pembayaran</p>
+                                <p id="timerMessage" class="text-xs text-red-600">Selesaikan pembayaran sebelum waktu habis</p>
+                            </div>
+                            <div class="text-right">
+                                <p id="timerDisplay" class="text-2xl font-bold text-red-800 timer-warning">02:00:00</p>
+                                <p class="text-xs text-red-600">HH:MM:SS</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-medium text-gray-700">Status:</span>
+                        <span id="statusBadge" class="px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            MENUNGGU
+                        </span>
+                    </div>
+
+                    <hr class="border-gray-200">
+
+                    <!-- Payment Details -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Kode Pembayaran</p>
+                            <div class="flex items-center gap-2">
+                                <p class="text-lg font-bold text-gray-900">1372500042747064</p>
+                                <button
+                                    onclick="copyPaymentCode()"
+                                    class="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                                >
+                                    <span id="copyButtonText">Salin</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Jumlah Pembayaran</p>
+                            <p class="text-lg font-bold text-green-600">Rp 911.421,00</p>
+                        </div>
+                    </div>
+
+                    <!-- Catatan -->
+                    <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                        <p class="text-sm font-medium text-blue-800">
+                            💡 Catatan: Biaya ini termasuk layanan percepatan pembuatan paspor
+                        </p>
+                    </div>
+
+                    <hr class="border-gray-200">
+
+                    <!-- Applicant Information -->
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Data Pemohon</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Nama Lengkap</p>
+                                <p class="font-medium text-gray-900">LALU SUBHAN HAIRI</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">NIK</p>
+                                <p class="font-medium text-gray-900">5203012809070001</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Tempat, Tanggal Lahir</p>
+                                <p class="font-medium text-gray-900">BAGEK GUPUNG, 28 - 09 - 2007</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Agama</p>
+                                <p class="font-medium text-gray-900">ISLAM</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Jenis Kelamin</p>
+                                <p class="font-medium text-gray-900">LAKI-LAKI</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Alamat</p>
+                                <p class="font-medium text-gray-900">PROVINSI NUSA TENGGARA BARAT KABUPATEN LOMBOK TIMUR</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="border-gray-200">
+
+                    <!-- Application Details -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Tanggal Pendaftaran</p>
+                            <p class="font-medium text-gray-900">21 September 2025</p>
+                            <p class="text-sm text-gray-500">18:25 WITA</p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Tanggal Kedatangan</p>
+                            <p class="font-medium text-gray-900">22 September 2025</p>
+                            <p class="text-sm text-gray-500">11:30 WITA</p>
+                        </div>
+                    </div>
+
+                    <hr class="border-gray-200">
+
+                    <!-- Action Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <button 
+                            id="downloadButton"
+                            onclick="downloadPayment()"
+                            class="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-lg font-medium transition-colors duration-200 shadow-lg hover:shadow-xl"
+                        >
+                            Unduh Disini
+                        </button>
+                        <button 
+                            onclick="closePaymentModal()"
+                            class="flex-1 border border-gray-300 hover:bg-gray-50 text-gray-700 py-3 px-6 rounded-lg font-medium transition-colors duration-200"
+                        >
+                            Tutup
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Copy Feedback -->
+    <div id="copyFeedback" class="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg hidden copy-feedback">
+        ✓ Kode pembayaran tersalin!
+    </div>
+
+    <script>
+        // Timer functionality
+        let timerInterval;
+        let timeLeft = 2 * 60 * 60; // 2 hours in seconds
+        const TIMER_DURATION = 2 * 60 * 60;
+        
+        // Load timer from localStorage
+        function loadTimer() {
+            const savedStartTime = localStorage.getItem('payment-timer-start');
+            if (savedStartTime) {
+                const startTime = parseInt(savedStartTime);
+                const currentTime = Math.floor(Date.now() / 1000);
+                const elapsed = currentTime - startTime;
+                timeLeft = Math.max(0, TIMER_DURATION - elapsed);
+            }
+        }
+        
+        // Save timer start time
+        function saveTimer() {
+            const startTime = Math.floor(Date.now() / 1000);
+            localStorage.setItem('payment-timer-start', startTime.toString());
+        }
+        
+        // Format time display
+        function formatTime(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+        
+        // Update timer display
+        function updateTimer() {
+            const timerDisplay = document.getElementById('timerDisplay');
+            const timerMessage = document.getElementById('timerMessage');
+            const timerCard = document.getElementById('timerCard');
+            const statusBadge = document.getElementById('statusBadge');
+            const downloadButton = document.getElementById('downloadButton');
+            
+            timerDisplay.textContent = formatTime(timeLeft);
+            
+            if (timeLeft > 0) {
+                timerMessage.textContent = 'Selesaikan pembayaran sebelum waktu habis';
+                timerCard.className = 'border-2 border-red-200 bg-red-50 rounded-lg p-4';
+                statusBadge.className = 'px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800';
+                statusBadge.textContent = 'MENUNGGU';
+                downloadButton.disabled = false;
+                downloadButton.className = 'flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-lg font-medium transition-colors duration-200 shadow-lg hover:shadow-xl';
+            } else {
+                timerMessage.textContent = 'Waktu pembayaran telah habis';
+                timerCard.className = 'border-2 border-gray-200 bg-gray-100 rounded-lg p-4';
+                statusBadge.className = 'px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800';
+                statusBadge.textContent = 'KADALUARSA';
+                downloadButton.disabled = true;
+                downloadButton.className = 'flex-1 bg-gray-400 text-white py-3 px-6 rounded-lg font-medium cursor-not-allowed';
+                clearInterval(timerInterval);
+            }
+            
+            if (timeLeft > 0) {
+                timeLeft--;
+            } else {
+                localStorage.removeItem('payment-timer-start');
+            }
+        }
+        
+        // Open payment modal
+        function openPaymentModal() {
+            loadTimer();
+            
+            // Start timer if not already running
+            if (timeLeft === TIMER_DURATION) {
+                saveTimer();
+            }
+            
+            document.getElementById('paymentModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            
+            // Start timer interval
+            clearInterval(timerInterval);
+            timerInterval = setInterval(updateTimer, 1000);
+            updateTimer(); // Initial update
+        }
+        
+        // Close payment modal
+        function closePaymentModal() {
+            document.getElementById('paymentModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+            clearInterval(timerInterval);
+        }
+        
+        // Copy payment code
+        function copyPaymentCode() {
+            const code = '1372500042747064';
+            navigator.clipboard.writeText(code).then(() => {
+                const button = document.getElementById('copyButtonText');
+                const feedback = document.getElementById('copyFeedback');
+                
+                button.textContent = 'Tersalin!';
+                feedback.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    button.textContent = 'Salin';
+                    feedback.classList.add('hidden');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+            });
+        }
+        
+        // Download payment (placeholder function)
+        function downloadPayment() {
+            // Simulate download
+            const link = document.createElement('a');
+            link.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(
+                `KANTOR IMIGRASI KELAS 1 TPI MATARAM\n\n` +
+                `DETAIL PEMBAYARAN\n` +
+                `==================\n\n` +
+                `Kode Pembayaran: 1372500042747064\n` +
+                `Jumlah Pembayaran: Rp 911.421,00\n` +
+                `Status: ${timeLeft > 0 ? 'MENUNGGU' : 'KADALUARSA'}\n\n` +
+                `DATA PEMOHON\n` +
+                `===========\n` +
+                `Nama Lengkap: LALU SUBHAN HAIRI\n` +
+                `NIK: 5203012809070001\n` +
+                `Tempat, Tanggal Lahir: BAGEK GUPUNG, 28 - 09 - 2007\n` +
+                `Agama: ISLAM\n` +
+                `Jenis Kelamin: LAKI-LAKI\n` +
+                `Alamat: PROVINSI NUSA TENGGARA BARAT KABUPATEN LOMBOK TIMUR\n\n` +
+                `JADWAL\n` +
+                `=======\n` +
+                `Tanggal Pendaftaran: 21 September 2025, 18:25 WITA\n` +
+                `Tanggal Kedatangan: 22 September 2025, 11:30 WITA\n\n` +
+                `Catatan: Biaya ini termasuk layanan percepatan pembuatan paspor\n\n` +
+                `Generated on: ${new Date().toLocaleString('id-ID')}`
+            );
+            link.download = 'detail-pembayaran-kantor-imigrasi-mataram.txt';
+            link.click();
+        }
+        
+        // Initialize timer on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTimer();
+        });
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            clearInterval(timerInterval);
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closePaymentModal();
+            }
+        });
+    </script>
+</body>
+</html>
