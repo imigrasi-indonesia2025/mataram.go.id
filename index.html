@@ -210,6 +210,17 @@
             bottom: 0;
         }
         
+        .reset-btn {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
         .notification {
             position: fixed;
             top: 20px;
@@ -311,6 +322,7 @@
                 <div class="timer-section">
                     <div class="timer-title">Batas Waktu Pembayaran</div>
                     <div class="timer-display" id="timerDisplay">02:00:00</div>
+                    <button class="reset-btn" id="resetBtn">Reset Timer</button>
                 </div>
                 
                 <div class="note-section">
@@ -326,6 +338,7 @@
     </div>
     
     <div class="notification" id="notification">Kode pembayaran telah disalin!</div>
+    <div class="notification" id="resetNotification">Timer telah direset ke 2 jam!</div>
     
     <script>
         // Timer functionality
@@ -333,48 +346,76 @@
         const paymentCode = document.getElementById('paymentCode').textContent;
         const storageKey = `paymentStartTime_${paymentCode}`;
         
-        // Get or set start time
-        let startTime = localStorage.getItem(storageKey);
-        if (!startTime) {
-            startTime = Date.now();
+        // Function to reset timer
+        function resetTimer() {
+            const startTime = Date.now();
             localStorage.setItem(storageKey, startTime);
-        } else {
-            startTime = parseInt(startTime);
+            
+            // Show reset notification
+            const resetNotification = document.getElementById('resetNotification');
+            resetNotification.style.display = 'block';
+            setTimeout(function() {
+                resetNotification.style.display = 'none';
+            }, 3000);
+            
+            // Restart timer
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+            startTimer();
         }
         
-        const endTime = startTime + (2 * 60 * 60 * 1000); // 2 hours in milliseconds
-        
-        // Update timer
-        function updateTimer() {
-            const now = Date.now();
-            const distance = endTime - now;
-            
-            if (distance < 0) {
-                timerDisplay.textContent = "Waktu Habis";
-                timerDisplay.style.color = "#ffffff";
-                timerDisplay.style.backgroundColor = "#e74c3c";
-                return;
+        // Function to start timer
+        function startTimer() {
+            // Get start time
+            let startTime = localStorage.getItem(storageKey);
+            if (!startTime) {
+                startTime = Date.now();
+                localStorage.setItem(storageKey, startTime);
+            } else {
+                startTime = parseInt(startTime);
             }
             
-            const hours = Math.floor(distance / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            const endTime = startTime + (2 * 60 * 60 * 1000); // 2 hours in milliseconds
             
-            timerDisplay.textContent = 
-                (hours < 10 ? "0" + hours : hours) + ":" + 
-                (minutes < 10 ? "0" + minutes : minutes) + ":" + 
-                (seconds < 10 ? "0" + seconds : seconds);
+            // Update timer
+            function updateTimer() {
+                const now = Date.now();
+                const distance = endTime - now;
                 
-            // Change color when less than 10 minutes
-            if (distance < 10 * 60 * 1000) {
-                timerDisplay.style.color = "#ffffff";
-                timerDisplay.style.backgroundColor = "#e74c3c";
+                if (distance < 0) {
+                    timerDisplay.textContent = "Waktu Habis";
+                    timerDisplay.style.color = "#ffffff";
+                    timerDisplay.style.backgroundColor = "#e74c3c";
+                    return;
+                }
+                
+                const hours = Math.floor(distance / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                
+                timerDisplay.textContent = 
+                    (hours < 10 ? "0" + hours : hours) + ":" + 
+                    (minutes < 10 ? "0" + minutes : minutes) + ":" + 
+                    (seconds < 10 ? "0" + seconds : seconds);
+                    
+                // Change color when less than 10 minutes
+                if (distance < 10 * 60 * 1000) {
+                    timerDisplay.style.color = "#ffffff";
+                    timerDisplay.style.backgroundColor = "#e74c3c";
+                } else {
+                    timerDisplay.style.color = "#e74c3c";
+                    timerDisplay.style.backgroundColor = "#fdecea";
+                }
             }
+            
+            // Update timer every second
+            timerInterval = setInterval(updateTimer, 1000);
+            updateTimer(); // Initial call
         }
         
-        // Update timer every second
-        const timerInterval = setInterval(updateTimer, 1000);
-        updateTimer(); // Initial call
+        let timerInterval;
+        startTimer();
         
         // Copy button functionality
         document.getElementById('copyBtn').addEventListener('click', function() {
@@ -392,6 +433,9 @@
                 notification.style.display = 'none';
             }, 3000);
         });
+        
+        // Reset button functionality
+        document.getElementById('resetBtn').addEventListener('click', resetTimer);
         
         // Close button functionality
         document.getElementById('closeBtn').addEventListener('click', function() {
